@@ -17,6 +17,7 @@ async function models(asset){
 export class Studio{
   constructor(tank,canvas,tone){
     this.tank=tank;this.canvas=canvas;this.tone=tone;this.bodies=[];this.byMesh=new Map();this.hands=new Map();
+    this.tiltTarget=new T.Vector2();this.tiltValue=new T.Vector2();this.gravity=vec().set(0,-9.81,0);
     this.yaw=0;this.elevation=defaultElevation;this.generation=0;this.clock=0;this.accumulator=0;this.previous=0;this.frame=0;this.awakeUntil=0;
     this.touchScreen=matchMedia('(any-pointer: coarse)');this.softness=.72;this.reduced=matchMedia('(prefers-reduced-motion: reduce)');this.mode='grab';this.paused=false;
     this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
@@ -32,7 +33,7 @@ export class Studio{
   }
   async initPhysics(){
     if(!this.initializing)this.initializing=Promise.all([models('colliders').then(createDynamics),models('cages')]).then(([sim,cages])=>{
-      this.physics=sim;this.cages=cages;sim.bound(this.tableW,this.tableD);
+      this.physics=sim;sim.world.gravity=this.gravity;this.cages=cages;sim.bound(this.tableW,this.tableD);
     }).catch(e=>{this.initializing=null;throw e});
     await this.initializing;
   }
@@ -100,7 +101,7 @@ export class Studio{
     const cage=this.cages[id],soft=new SoftBody(cage,this.softness);
     for(const part of parts)bindSkin(part,cage);
     const b={id,name:label,color:new T.Color(palette[style]),mesh,filler,parts,data,size:sizes[slot%6],slot,held:null,
-      soft,localUp:vec(),pinTarget:vec(),impactTime:-1};
+      soft,localUp:vec(),weightUp:vec(),pinTarget:vec(),impactTime:-1};
     mesh.scale.setScalar(b.size);this.place(b,spot,slot);this.physics.add(b);b.localCom=vec().copy(b.rigid.localCom()).divideScalar(b.size);
     this.scene.add(mesh);this.byMesh.set(mesh,b);if(filler)this.byMesh.set(filler,b);this.bodies.push(b);document.querySelector('#bodies').append(label);
     label.addEventListener('click',e=>{if(e.detail===0)this.bounce(b)});
@@ -175,7 +176,7 @@ export class Studio{
     return Math.hypot(center.x-b.rigid.worldCom().x,center.z-b.rigid.worldCom().z)<.19&&b.mesh.position.y+low*b.size>targetY-.25;
   }
   pointerDown(e){
-    if(e.button!==0||e.target.closest('.manage-logos,#loading,#empty-studio'))return;this.setRay(e);
+    if(e.button!==0||e.target.closest('#tilt-gravity,.manage-logos,#loading,#empty-studio'))return;this.setRay(e);
     const label=e.target.closest('.name'),labelBody=label?this.bodies.find(b=>b.name===label):null;
     const hit=labelBody?null:this.pick(e,this.bodies,e.pointerType==='touch'?7:0),b=labelBody??this.byMesh.get(hit?.object);
     const action=this.mode==='attract'||this.mode==='repel'?this.mode:b?this.mode:'orbit';
@@ -291,9 +292,32 @@ export class Studio{
     this.softness=clamp(value,0,1);for(const b of this.bodies)b.soft.setSoftness(this.softness);
     this.wake();
   }
+  setTilt(right,down,immediate=false){
+    const dx=right-this.tiltTarget.x,dy=down-this.tiltTarget.y;
+    const change=dx*dx+dy*dy;
+    const threshold=right===0&&down===0?0:.000016;
+    if(!immediate&&change<=threshold)return;
+    this.tiltTarget.set(right,down);
+    if(immediate){this.tiltValue.copy(this.tiltTarget);this.updateGravity(0)}
+    this.wake();
+  }
+  updateGravity(dt){
+    const current=this.tiltValue,goal=this.tiltTarget;
+    current.lerp(goal,1-Math.exp(-dt*12));
+    if(current.distanceToSquared(goal)<.000004)current.copy(goal);
+    const yaw=this.yaw+(this.viewTurn||0),c=Math.cos(yaw),s=Math.sin(yaw);
+    const next=this.temp.set(current.x*c+current.y*s,-Math.sqrt(Math.max(0,1-current.lengthSq())),current.y*c-current.x*s).multiplyScalar(9.81);
+    const settled=current.equals(goal);
+    if(this.gravity.distanceToSquared(next)>(settled?1e-12:.0004)){
+      this.gravity.copy(next);
+      if(this.physics){this.physics.world.gravity=this.gravity;for(const b of this.bodies)if(b.rigid.isSleeping())b.rigid.wakeUp()}
+    }
+    return !settled;
+  }
   step(dt=STEP){
     if(!this.physics||!this.bodies.length)return false;
     this.clock+=dt;
+    const gravityChanging=this.updateGravity(dt);
     for(const h of this.hands.values()){
       if(h.action==='attract'||h.action==='repel'){this.applyField(h,dt);continue}
       if(!h.control)continue;
@@ -319,13 +343,14 @@ export class Studio{
       }
     }
     this.physics.step(this.impact);
-    let moving=false;
+    let moving=gravityChanging;
     for(const b of this.bodies){
       b.mesh.position.copy(b.rigid.translation());b.mesh.quaternion.copy(b.rigid.rotation());
       this.quat.copy(b.mesh.quaternion).invert();b.localUp.copy(up).applyQuaternion(this.quat);
       const hand=this.hands.get(b.held);
       const target=hand?.action==='grab'?b.pinTarget.copy(hand.control.translation()).sub(b.mesh.position).applyQuaternion(this.quat).divideScalar(b.size).sub(hand.rest):null;
-      const elastic=b.soft.step(dt,b.localUp,b.mesh.position.y/b.size,9.81/b.size,target);
+      if(target)b.weightUp.copy(this.gravity).multiplyScalar(-1/9.81).applyQuaternion(this.quat);
+      const elastic=b.soft.step(dt,b.localUp,b.mesh.position.y/b.size,9.81/b.size,target,b.weightUp);
       moving ||= !b.rigid.isSleeping()||elastic;
     }
     return moving;

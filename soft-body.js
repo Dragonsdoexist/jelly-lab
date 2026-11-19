@@ -146,7 +146,7 @@ export class SoftBody{
       this.v[j]+=w*x/h*.75;this.v[j+1]+=w*y/h*.75;this.v[j+2]+=w*z/h*.75;
     }
   }
-  step(dt,up,floorHeight,gravity,target){
+  step(dt,up,floorHeight,gravity,target,weightUp=up){
     if(!this.active)return false;
     if(this.patches.length)this.kick();
     const {u,v,force,rest,mass,ends,links}=this,h=dt/3;
@@ -171,7 +171,7 @@ export class SoftBody{
         }
         // Rigid transport already integrates gravity in free fall. A supported
         // grip exposes the material to its own weight in the rotating frame.
-        if(target){v[j]-=gravity*up.x*h;v[j+1]-=gravity*up.y*h;v[j+2]-=gravity*up.z*h}
+        if(target){v[j]-=gravity*weightUp.x*h;v[j+1]-=gravity*weightUp.y*h;v[j+2]-=gravity*weightUp.z*h}
         u[j]+=v[j]*h;u[j+1]+=v[j+1]*h;u[j+2]+=v[j+2]*h;
         const base=rest[j]*up.x+rest[j+1]*up.y+rest[j+2]*up.z+floorHeight-this.cage.radii[i];
         const depth=Math.max(0,-(Math.max(0,base)+up.x*u[j]+up.y*u[j+1]+up.z*u[j+2]));

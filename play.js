@@ -1,5 +1,6 @@
 import { companies,palette } from './sculpture.js';
 import {connectSoftness} from './softness-dial.js';
+import {connectTilt} from './phone-tilt.js';
 import { Studio } from './studio.js';
 
 const $=selector=>document.querySelector(selector);
@@ -32,7 +33,7 @@ function stills(entries){
   sheet.style.gridTemplateColumns='repeat('+cols+',minmax(0,1fr))';sheet.style.gridTemplateRows='repeat('+Math.max(1,Math.ceil(entries.length/cols))+',minmax(60px,1fr))';
   sheet.replaceChildren(...entries.map(([id,name])=>{const fig=document.createElement('figure'),img=document.createElement('img'),label=document.createElement('figcaption');img.src='previews/'+id+'.webp';img.alt=name+' translucent sculpture';label.textContent=name;fig.append(img,label);return fig}));
   canvas.hidden=true;$('#bodies').hidden=true;
-  for(const el of [...all('.tools button'),$('#light-angle'),$('#softness-dial'),$('#shake')])el.disabled=true;
+  for(const el of [...all('.tools button'),$('#light-angle'),$('#softness-dial'),$('#shake'),$('#tilt-gravity')])el.disabled=true;
   $('#hint').textContent='Studio renders are shown here. Interactive 3D requires WebGL 2.';
 }
 function menuState(){
@@ -97,8 +98,9 @@ $('#sound').onclick=async()=>{
 document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||help.open||menu.open)return;
   if(e.key==='Escape'&&frame.classList.contains('expanded'))expand(false);if(e.key.toLowerCase()==='s'&&!e.repeat&&!failed3D){e.preventDefault();studio.shake()}
 });
-function fallback(){failed3D=true;studio?.setPaused(true);applySelection()}
+function fallback(){stopTilt();failed3D=true;studio?.setPaused(true);applySelection()}
 try{studio=new Studio(tank,canvas,tone)}catch(e){console.warn('Interactive renderer unavailable.',e.message);failed3D=true}
+const stopTilt=connectTilt($('#tilt-gravity'),$('#tilt-status'),(x,y,immediate)=>studio?.setTilt(x,y,immediate));
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();fallback()});canvas.addEventListener('webglcontextrestored',()=>location.reload());
 connectSoftness($('#softness-dial'),$('#softness-value'),s=>studio?.setSoftness(s));
 setMode('grab');applySelection();
