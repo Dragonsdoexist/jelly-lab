@@ -84,3 +84,6 @@ dialog{color:var(--ink);width:min(420px,calc(100% - 30px));padding:23px;border:1
 .tilt-toggle[data-state=requesting] .switch,.tilt-toggle[data-state=waiting] .switch{opacity:.6}
 #tilt-status{position:absolute;left:14px;top:49px;z-index:4;width:max-content;max-width:min(265px,calc(100% - 28px));margin:0;padding:7px 10px;background:#fffdffed;border:1px solid #e0d9e4;border-radius:8px;color:#514657;box-shadow:0 2px 5px #3829400d;font:12px/1.4 DM,sans-serif;pointer-events:none}
 @media(any-pointer:coarse){.tilt-toggle{top:4px;left:5px;min-height:44px}#tilt-status{top:51px;left:5px}}
+#reset-view{position:absolute;z-index:3;right:14px;bottom:12px;display:flex;align-items:center;gap:6px;min-height:32px;padding:5px 11px;border:1px solid #dcd6df;border-radius:20px;background:#ffffffed;color:#514657;font:600 12px DM,sans-serif;box-shadow:0 1px 4px #493a510a}
+#reset-view:hover{background:var(--lavender)}#reset-view .icon{width:16px;height:16px}
+@media(any-pointer:coarse){#reset-view{right:5px;bottom:4px;min-height:44px}}

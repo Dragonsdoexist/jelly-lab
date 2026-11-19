@@ -4,6 +4,7 @@ import {createOptics} from './optics.js';
 import {createTransmission} from './transmission.js';
 import {SoftBody} from './soft-body.js';
 import {createDynamics,STEP} from './physics.js';
+import {TrayMotion} from './tray-motion.js';
 
 const vec=()=>new T.Vector3(),up=new T.Vector3(0,1,0),tau=2*Math.PI,clamp=T.MathUtils.clamp;
 const clearLogos=new Set(['openai','meta','perplexity']);
@@ -18,6 +19,7 @@ export class Studio{
   constructor(tank,canvas,tone){
     this.tank=tank;this.canvas=canvas;this.tone=tone;this.bodies=[];this.byMesh=new Map();this.hands=new Map();
     this.tiltTarget=new T.Vector2();this.tiltValue=new T.Vector2();this.gravity=vec().set(0,-9.81,0);
+    this.trayMotion=new TrayMotion();this.trayAcceleration=vec();
     this.yaw=0;this.elevation=defaultElevation;this.generation=0;this.clock=0;this.accumulator=0;this.previous=0;this.frame=0;this.awakeUntil=0;
     this.touchScreen=matchMedia('(any-pointer: coarse)');this.softness=.72;this.reduced=matchMedia('(prefers-reduced-motion: reduce)');this.mode='grab';this.paused=false;
     this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
@@ -49,7 +51,7 @@ export class Studio{
   resize(wake=true){
     const r=this.tank.getBoundingClientRect();if(!r.width||!r.height)return;
     this.w=r.width;this.h=r.height;const aspect=this.w/this.h;
-    this.nextNameLayout=0;this.labelKeepouts=['.stage-meta','.manage-logos'].map(selector=>{
+    this.nextNameLayout=0;this.labelKeepouts=['.stage-meta','.manage-logos','#reset-view'].map(selector=>{
       const box=this.tank.querySelector(selector).getBoundingClientRect();
       return {l:box.left-r.left-2,r:box.right-r.left+2,t:box.top-r.top-2,b:box.bottom-r.top+2};
     });
@@ -68,6 +70,10 @@ export class Studio{
   positionCamera(){
     const c=Math.cos(this.elevation),angle=this.yaw+(this.viewTurn||0);this.camera.position.set(Math.sin(angle)*c,Math.sin(this.elevation),Math.cos(angle)*c).multiplyScalar(30).add(this.target);
     this.camera.lookAt(this.target);this.camera.updateMatrixWorld();
+  }
+  resetView(){
+    this.yaw=0;this.elevation=defaultElevation;this.positionCamera();
+    this.nextNameLayout=0;this.wake();
   }
   spawnPoint(slot,count,existing){
     const cols=Math.min(count,Math.max(1,Math.round(Math.sqrt(count*(this.portrait?.64:1.52)))));
@@ -176,7 +182,7 @@ export class Studio{
     return Math.hypot(center.x-b.rigid.worldCom().x,center.z-b.rigid.worldCom().z)<.19&&b.mesh.position.y+low*b.size>targetY-.25;
   }
   pointerDown(e){
-    if(e.button!==0||e.target.closest('#tilt-gravity,.manage-logos,#loading,#empty-studio'))return;this.setRay(e);
+    if(e.button!==0||e.target.closest('#tilt-gravity,#reset-view,.manage-logos,#loading,#empty-studio'))return;this.setRay(e);
     const label=e.target.closest('.name'),labelBody=label?this.bodies.find(b=>b.name===label):null;
     const hit=labelBody?null:this.pick(e,this.bodies,e.pointerType==='touch'?7:0),b=labelBody??this.byMesh.get(hit?.object);
     const action=this.mode==='attract'||this.mode==='repel'?this.mode:b?this.mode:'orbit';
@@ -298,21 +304,28 @@ export class Studio{
     const threshold=right===0&&down===0?0:.000016;
     if(!immediate&&change<=threshold)return;
     this.tiltTarget.set(right,down);
-    if(immediate){this.tiltValue.copy(this.tiltTarget);this.updateGravity(0)}
+    if(immediate){this.trayMotion.clear();this.tiltValue.copy(this.tiltTarget);this.updateGravity(0)}
     this.wake();
+  }
+  moveTray(acceleration,duration){
+    if(!this.paused&&this.bodies.length&&this.trayMotion.push(acceleration,duration))this.wake();
   }
   updateGravity(dt){
     const current=this.tiltValue,goal=this.tiltTarget;
     current.lerp(goal,1-Math.exp(-dt*12));
     if(current.distanceToSquared(goal)<.000004)current.copy(goal);
     const yaw=this.yaw+(this.viewTurn||0),c=Math.cos(yaw),s=Math.sin(yaw);
-    const next=this.temp.set(current.x*c+current.y*s,-Math.sqrt(Math.max(0,1-current.lengthSq())),current.y*c-current.x*s).multiplyScalar(9.81);
+    // In the moving tray's frame, jelly accelerates opposite the phone.
+    // The actual floor supplies support during the drive and releases it on braking.
+    const a=this.trayMotion.take(dt,this.trayAcceleration);
+    const right=current.x*9.81-a.x,near=current.y*9.81-a.z;
+    const next=this.temp.set(right*c+near*s,-9.81*Math.sqrt(Math.max(0,1-current.lengthSq()))-a.y,near*c-right*s);
     const settled=current.equals(goal);
     if(this.gravity.distanceToSquared(next)>(settled?1e-12:.0004)){
       this.gravity.copy(next);
       if(this.physics){this.physics.world.gravity=this.gravity;for(const b of this.bodies)if(b.rigid.isSleeping())b.rigid.wakeUp()}
     }
-    return !settled;
+    return !settled || a.lengthSq()>0 || this.trayMotion.pending>0;
   }
   step(dt=STEP){
     if(!this.physics||!this.bodies.length)return false;
@@ -420,5 +433,5 @@ export class Studio{
   };
   wake(){this.awakeUntil=performance.now()+250;if(!this.frame&&!this.paused&&!document.hidden)this.frame=requestAnimationFrame(this.tick)}
   cancel(){cancelAnimationFrame(this.frame);this.frame=0;this.previous=0;this.accumulator=0}
-  setPaused(value){this.paused=value;if(value){this.cancelHands();this.cancel()}else this.wake()}
+  setPaused(value){this.paused=value;if(value){this.trayMotion.clear();this.cancelHands();this.cancel()}else this.wake()}
 }
