@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f7f7f5">
+  <meta name="description" content="Shape, turn, and light 24 translucent 3D jelly sculptures modeled from AI company logos.">
+  <title>Jelly Lab — The Jelly Studio</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg aria-hidden="true" class="icon-library" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="i-brand" viewBox="0 0 40 40"><path d="M4 22C4 14 11 6 20 5c7-1 10 3 12 8 2 4 7 7 5 13-1 5-6 8-11 7-3-.5-5-2.3-8-1.5C9 35 3 31 4 22Z" fill="currentColor"/><path d="M11 16c1.6-3.2 4.5-5.6 8-6.2" stroke="#fff" stroke-opacity=".75" stroke-width="2" fill="none" stroke-linecap="round"/><g fill="#fff" transform="rotate(-9 22 20)"><ellipse cx="18" cy="20" rx="1.9" ry="3.1"/><ellipse cx="26" cy="20" rx="1.9" ry="3.1"/></g></symbol>
+    <symbol id="i-audio-off" viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5l4.5 4zM16 9l5 6m0-6-5 6"/></symbol>
+    <symbol id="i-audio-on" viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5l4.5 4zM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="i-shake" viewBox="0 0 24 24"><rect x="7.3" y="5" width="9.4" height="14" rx="3" transform="rotate(17 12 12)"/><path d="m4.5 6.5-2 5.7m16.9 5.3 2-5.7"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol><symbol id="i-next" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+    <symbol id="i-grab" viewBox="0 0 24 24"><path d="M8 12.5V7.7a1.45 1.45 0 0 1 2.9 0v3.9-7.1a1.45 1.45 0 0 1 2.9 0v6.7-5a1.4 1.4 0 0 1 2.8 0v5.2-3.2a1.4 1.4 0 0 1 2.8 0V15c0 4.2-2.2 6.3-5.7 6.3-2.7 0-4.2-1.2-5.9-3.7l-3.5-5a1.5 1.5 0 0 1 2.2-2z"/></symbol>
+    <symbol id="i-attract" viewBox="0 0 24 24"><path d="m3 3 6 6m-5 0h5V4m12 17-6-6m5 0h-5v5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-repel" viewBox="0 0 24 24"><path d="m9 9-6-6m0 5V3h5m7 12 6 6m0-5v5h-5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-gravity" viewBox="0 0 24 24"><path d="M7 3v10m-3-3 3 3 3-3m6-6v12m-3-3 3 3 3-3M4 20h16"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 10A7.7 7.7 0 1 1 5 16m-.5-11v5h5"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12m0-12L6 18"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5m0-9v.1"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m7 17 10-10M8 7h9v9"/></symbol>
+    <symbol id="i-cursor" viewBox="0 0 24 24"><path d="m4 3 5.6 16 3.3-6.1 6.1-3.3z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><rect x="14.5" y="14.5" width="6" height="6" rx="1"/></symbol>
+    <symbol id="i-turn" viewBox="0 0 24 24"><path d="m12 5 5.4 3.1v6.3l-5.4 3.1-5.4-3.1V8.1zM6.6 8.1 12 11.2l5.4-3.1M12 11.2v6.3M4.4 12.2C.8 14.6 5 19 14 19m-2.2-2.3L14.4 19l-2.6 2.2"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
+    <symbol id="i-model" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.4 8-4.4M12 12v9"/></symbol>
+  </defs></svg>
+  <header class="topbar"><div class="bar-inner">
+    <a href="#playground" class="brand" aria-label="Jelly Lab playground"><svg aria-hidden="true"><use href="#i-brand"/></svg>Jelly Lab</a>
+    <nav aria-label="Main"><button class="nav-tab selected" id="playground-link" aria-current="page">Playground</button><button class="nav-tab" id="collection-link" aria-haspopup="dialog" aria-controls="logo-menu">Logo library</button></nav>
+    <button id="sound" class="sound" aria-pressed="false"><svg class="icon"><use href="#i-audio-off"/></svg><span>Sound off</span></button>
+  </div></header>
+  <main>
+    <section id="playground" aria-labelledby="title">
+      <div class="hero"><div><h1 id="title">Jelly <em>studio</em><span>.</span></h1><p>Pick your logos, turn the softness dial, and stack the jelly.</p></div>
+        <button id="shake" class="primary"><svg class="icon"><use href="#i-shake"/></svg>Shake studio<kbd>S</kbd></button>
+      </div>
+      <div id="play-frame" class="play-frame">
+        <div id="tank" class="tank" aria-label="Interactive 3D sculpture studio">
+          <div class="stage-meta"><svg class="icon"><use href="#i-model"/></svg><span>3D studio</span></div>
+          <button class="manage-logos" id="manage-logos" aria-haspopup="dialog" aria-controls="logo-menu"><svg class="icon"><use href="#i-grid"/></svg>Choose logos <span id="active-count">6</span></button>
+          <div id="empty-studio" hidden><p>Your studio is empty.</p><button id="empty-choose">Add a logo</button></div>
+          <canvas id="surfaces" aria-label="Colored transparent logo sculptures on a white floor"></canvas>
+          <div id="bodies"></div>
+          <p id="loading" role="status">Opening the studio…</p>
+        </div>
+        <div class="control-bar">
+          <div class="tools" role="group" aria-label="Interaction tools">
+            <button data-mode="grab" aria-pressed="true"><svg class="icon"><use href="#i-grab"/></svg>Grab</button>
+            <button data-mode="turn" aria-pressed="false"><svg class="icon"><use href="#i-turn"/></svg>Turn</button>
+            <button data-mode="attract" aria-pressed="false"><svg class="icon"><use href="#i-attract"/></svg>Attract</button>
+            <button data-mode="repel" aria-pressed="false"><svg class="icon"><use href="#i-repel"/></svg>Repel</button>
+          </div>
+          <div class="softness-control"><button type="button" id="softness-dial" role="slider" aria-labelledby="softness-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72" title="Turn the rim or drag the center up and down"><span aria-hidden="true"></span></button><div><label id="softness-label" for="softness-dial">Softness</label><output id="softness-value" for="softness-dial" aria-hidden="true">72%</output></div></div>
+          <div class="light-control"><label for="light-angle"><svg class="icon"><use href="#i-sun"/></svg>Light angle</label><input id="light-angle" type="range" min="0" max="360" step="1" value="225" aria-label="Studio light angle"><output for="light-angle" id="light-value">225°</output></div>
+          <div class="other-tools"><button id="reset" class="icon-button" aria-label="Reset studio" title="Reset studio"><svg class="icon"><use href="#i-reset"/></svg></button><button id="expand" class="icon-button" aria-label="Expand studio" title="Expand studio" aria-pressed="false"><svg class="icon"><use href="#i-expand"/></svg></button></div>
+        </div>
+      </div>
+      <div class="foot"><p><svg class="icon"><use href="#i-cursor"/></svg><span id="hint">Drag a logo over another and release to stack them.</span></p><button id="help"><svg class="icon"><use href="#i-info"/></svg>How to play</button></div>
+    </section>
+  </main>
+  <dialog id="logo-menu" aria-labelledby="library-title">
+    <div class="modal-head"><h2 id="library-title">Choose <em>logos</em></h2><button class="icon-button" id="close-menu" aria-label="Close logo menu"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <label class="logo-search"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input type="search" id="logo-search" placeholder="Find a company" aria-label="Find a company" autocomplete="off"></label>
+    <div class="library-actions"><span id="menu-count" aria-live="polite"></span><div><button id="add-all">Add all</button><span>·</span><button id="remove-all">Remove all</button></div></div>
+    <div id="catalog" aria-label="Company logos"></div><p id="no-results" hidden>No matching companies.</p>
+    <div class="menu-footer"><button class="primary" id="menu-done">Done</button></div>
+  </dialog>
+  <dialog id="instructions"><div class="modal-head"><h2>How to play</h2><button class="icon-button" id="close-help" aria-label="Close instructions"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <dl><dt>Grab &amp; throw</dt><dd>Drag a sculpture upward to lift and stretch it, then release to throw. Tap it for a bounce. Grab a stroke off-center to make the sculpture swing. Its name also works as a handle.</dd><dt>Stack</dt><dd>Drag a logo over another until its name lights up, then release. On a touchscreen, one finger lifts and carries the jelly. Both pieces wobble on contact, and the lower one keeps its dent until you lift the weight.</dd><dt>Softness</dt><dd>Turn the rim clockwise for softer jelly, or drag the center upward. A corner grip lets the rest sag under its weight. Drop it on an edge to send a ripple through it. The arrow keys fine-tune the dial.</dd><dt>Turn &amp; orbit</dt><dd>Choose Turn and drag a sculpture to see its sides and back. Drag the empty floor to orbit the whole studio.</dd><dt>Light</dt><dd>Slide the light angle to sweep the colored caustics across the floor. The range also responds to arrow keys.</dd><dt>Forces</dt><dd>Hold Attract or Repel over the floor to move nearby pieces. Release the force and gravity carries the sculptures back to the floor.</dd><dt>Keyboard</dt><dd>Tab to a sculpture. Enter bounces it. The arrows throw it, or rotate it with Turn selected. S shakes the studio.</dd></dl>
+  </dialog>
+  <span class="sr-only" aria-live="polite" id="status"></span>
+  <script type="module" src="play.js"></script>
+</body>
+</html>
